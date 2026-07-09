@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Conversor de Rácio: Vídeo e Imagem</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 650px;
+            margin: 40px auto;
+            padding: 20px;
+            background-color: #f0f2f5;
+            color: #333;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        }
+        h2 {
+            text-align: center;
+            color: #007bff;
+            margin-top: 0;
+            margin-bottom: 25px;
+        }
+        .field {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #555;
+        }
+        select, input[type="file"], input[type="color"], button {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            box-sizing: border-box;
+            font-size: 1em;
+        }
+        input[type="color"] {
+            height: 45px;
+            padding: 2px;
+            cursor: pointer;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            font-weight: bold;
+            border: none;
+            cursor: pointer;
+            transition: background 0.2s;
+            margin-top: 10px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        button:disabled {
+            background-color: #a0cfff;
+            cursor: not-allowed;
+        }
+        .progress-container {
+            margin-top: 25px;
+            display: none;
+            border-top: 1px solid #eee;
+            padding-top: 20px;
+        }
+        progress {
+            width: 100%;
+            height: 25px;
+            margin-bottom: 10px;
+        }
+        progress::-webkit-progress-bar {
+            background-color: #eee;
+            border-radius: 4px;
+        }
+        progress::-webkit-progress-value {
+            background-color: #28a745;
+            border-radius: 4px;
+            transition: width 0.1s linear;
+        }
+        #status {
+            font-weight: 600;
+            text-align: center;
+            font-size: 0.95em;
+            min-height: 1.2em;
+            word-wrap: break-word;
+        }
+        .erro {
+            color: #dc3545;
+            background-color: #f8d7da;
+            padding: 10px;
+            border-radius: 4px;
+            margin-top: 10px;
+        }
+        .sucesso {
+            color: #28a745;
+        }
+        video, canvas, img {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Conversor de Rácio (Vídeo & Imagem)</h2>
+    
+    <div class="field">
+        <label for="fileInput">1. Escolher Ficheiro Original (Vídeo ou Imagem):</label>
+        <input type="file" id="fileInput" accept="video/*, image/*">
+    </div>
+
+    <div class="field">
+        <label for="conversionType">2. Selecionar Novo Rácio:</label>
+        <select id="conversionType">
+            <option value="9:16">Vertical (9:16) - Stories, Reels, TikTok [720x1280]</option>
+            <option value="16:9">Horizontal (16:9) - Standard, YouTube [1280x720]</option>
+            <option value="1:1">Quadrado (1:1) - Feed Instagram/Facebook [1080x1080]</option>
+            <option value="4:5">Vertical Curto (4:5) - Feed Instagram Patrocinado [1080x1350]</option>
+            <option value="4:3">Clássico (4:3) - Apresentações/TV [1024x768]</option>
+            <option value="21:9">Ultra-Panorâmico (21:9) - Cinema [1680x720]</option>
+        </select>
+    </div>
+
+    <div class="field">
+        <label for="bgColor">3. Cor das Barras de Fundo:</label>
+        <input type="color" id="bgColor" value="#000000">
+    </div>
+
+    <button id="startBtn" disabled>Converter e Descarregar</button>
+    
+    <div class="progress-container" id="progressContainer">
+        <label id="progressLabel" for="progressBar">Progresso:</label>
+        <progress id="progressBar" value="0" max="100"></progress>
+        <div id="status"></div>
+    </div>
+</div>
+
+<video id="sourceVideo" muted playsinline crossorigin="anonymous"></video>
+<canvas id="processingCanvas"></canvas>
+
+<script>
+    const fileInput = document.getElementById('fileInput');
+    const conversionType = document.getElementById('conversionType');
+    const bgColorInput = document.getElementById('bgColor');
+    const startBtn = document.getElementById('startBtn');
+    const progressContainer = document.getElementById('progressContainer');
+    const progressLabel = document.getElementById('progressLabel');
+    const progressBar = document.getElementById('progressBar');
+    const status = document.getElementById('status');
+    const video = document.getElementById('sourceVideo');
+    const canvas = document.getElementById('processingCanvas');
+    const ctx = canvas.getContext('2d');
+
+    let fileUrl = null;
+    let fileType = null; // 'video' ou 'image'
+    let sourceImage = null; // Guardará o objeto Image se for uma imagem
+    let animationFrameId = null;
+
+    fileInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            if (fileUrl) URL.revokeObjectURL(fileUrl);
+            fileUrl = URL.createObjectURL(file);
+            
+            // Ocultar a área de progresso anterior
+            progressContainer.style.display = 'none';
+            progressBar.value = 0;
+            status.className = "";
+            status.textContent = "";
+
+            if (file.type.startsWith('video/')) {
+                fileType = 'video';
+                sourceImage = null;
+                video.src = fileUrl;
+                video.load();
+                status.textContent = "Vídeo carregado com sucesso.";
+            } else if (file.type.startsWith('image/')) {
+                fileType = 'image';
+                sourceImage = new Image();
+                sourceImage.src = fileUrl;
+                sourceImage.onload = () => {
+                    status.textContent = "Imagem carregada com sucesso.";
+                };
+            }
+            startBtn.disabled = false;
+        }
+    });
+
+    // Configura as dimensões do Canvas com base na seleção
+    function definirDimensoesCanvas(racio) {
+        switch(racio) {
+            case "9:16": canvas.width = 720; canvas.height = 1280; break;
+            case "16:9": canvas.width = 1280; canvas.height = 720; break;
+            case "1:1": canvas.width = 1080; canvas.height = 1080; break;
+            case "4:5": canvas.width = 1080; canvas.height = 1350; break;
+            case "4:3": canvas.width = 1024; canvas.height = 768; break;
+            case "21:9": canvas.width = 1680; canvas.height = 720; break;
+            default: canvas.width = 1280; canvas.height = 720;
+        }
+    }
+
+    // Calcula as coordenadas e dimensões para o ajuste perfeito (Padding)
+    function calcularDesenho(vWidth, vHeight, cWidth, cHeight) {
+        const ratioVideo = vWidth / vHeight;
+        const ratioCanvas = cWidth / cHeight;
+        let drawWidth, drawHeight, drawX, drawY;
+
+        if (ratioVideo > ratioCanvas) {
+            drawWidth = cWidth;
+            drawHeight = cWidth / ratioVideo;
+            drawX = 0;
+            drawY = (cHeight - drawHeight) / 2;
+        } else {
+            drawHeight = cHeight;
+            drawWidth = cHeight * ratioVideo;
+            drawX = (cWidth - drawWidth) / 2;
+            drawY = 0;
+        }
+        return { drawX, drawY, drawWidth, drawHeight };
+    }
+
+    startBtn.addEventListener('click', () => {
+        const racioSelecionado = conversionType.value;
+        definirDimensoesCanvas(racioSelecionado);
+
+        if (fileType === 'image') {
+            // ---- PROCESSAMENTO DE IMAGEM (INSTANTÂNEO) ----
+            progressContainer.style.display = 'block';
+            progressLabel.style.display = 'none'; // Não precisa de barra para imagens
+            progressBar.style.display = 'none';
+            status.className = "";
+            status.textContent = "A processar imagem...";
+
+            // Limpar e aplicar cor de fundo
+            ctx.fillStyle = bgColorInput.value;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Ajustar imagem
+            const dim = calcularDesenho(sourceImage.width, sourceImage.height, canvas.width, canvas.height);
+            ctx.drawImage(sourceImage, 0, 0, sourceImage.width, sourceImage.height, dim.drawX, dim.drawY, dim.drawWidth, dim.drawHeight);
+
+            // Converter para ficheiro e descarregar
+            const imgUrl = canvas.toDataURL("image/png");
+            const a = document.createElement('a');
+            a.href = imgUrl;
+            a.download = `imagem_convertida_${racioSelecionado.replace(':', '_')}.png`;
+            a.click();
+
+            status.className = "sucesso";
+            status.textContent = "Imagem convertida e descarregada com sucesso!";
+
+        } else if (fileType === 'video') {
+            // ---- PROCESSAMENTO DE VÍDEO (TEMPO REAL) ----
+            if (!video.videoWidth || !video.videoHeight) {
+                status.className = "erro";
+                status.textContent = "Erro: O vídeo ainda não carregou totalmente.";
+                return;
+            }
+
+            try {
+                startBtn.disabled = true;
+                progressContainer.style.display = 'block';
+                progressLabel.style.display = 'block';
+                progressBar.style.display = 'block';
+                progressBar.value = 0;
+                status.className = "";
+                status.textContent = "A inicializar motor de vídeo...";
+
+                const stream = canvas.captureStream(30);
+                
+                try {
+                    const videoStream = video.captureStream ? video.captureStream() : (video.mozCaptureStream ? video.mozCaptureStream() : null);
+                    if (videoStream && videoStream.getAudioTracks().length > 0) {
+                        stream.addTrack(videoStream.getAudioTracks()[0]);
+                    }
+                } catch (aE) { console.warn("Sem áudio:", aE); }
+
+                let mediaRecorder;
+                const tipos = ['video/webm', 'video/webm;codecs=vp8', 'video/mp4;codecs=avc1'];
+                for (let t of tipos) {
+                    if (MediaRecorder.isTypeSupported(t)) {
+                        mediaRecorder = new MediaRecorder(stream, { mimeType: t });
+                        break;
+                    }
+                }
+                if (!mediaRecorder) mediaRecorder = new MediaRecorder(stream);
+
+                const chunks = [];
+                mediaRecorder.ondataavailable = (e) => { if (e.data && e.data.size > 0) chunks.push(e.data); };
+
+                mediaRecorder.onstop = () => {
+                    cancelAnimationFrame(animationFrameId);
+                    const blob = new Blob(chunks, { type: mediaRecorder.mimeType });
+                    const url = URL.createObjectURL(blob);
+                    const ext = mediaRecorder.mimeType.includes('mp4') ? 'mp4' : 'webm';
+                    
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `video_convertido_${racioSelecionado.replace(':', '_')}.${ext}`;
+                    a.click();
+                    
+                    progressBar.value = 100;
+                    status.className = "sucesso";
+                    status.textContent = "Vídeo convertido e descarregado!";
+                    startBtn.disabled = false;
+                    video.pause();
+                };
+
+                function drawFrame() {
+                    if (video.paused || video.ended) return;
+
+                    ctx.fillStyle = bgColorInput.value;
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                    const dim = calcularDesenho(video.videoWidth, video.videoHeight, canvas.width, canvas.height);
+                    ctx.drawImage(video, 0, 0, video.videoWidth, video.videoHeight, dim.drawX, dim.drawY, dim.drawWidth, dim.drawHeight);
+
+                    if (video.duration) {
+                        const pct = (video.currentTime / video.duration) * 100;
+                        progressBar.value = pct;
+                        status.textContent = `A processar vídeo: ${Math.round(pct)}%`;
+                    }
+                    animationFrameId = requestAnimationFrame(drawFrame);
+                }
+
+                mediaRecorder.start();
+                video.currentTime = 0;
+                video.play().then(() => { drawFrame(); }).catch(err => {
+                    status.className = "erro";
+                    status.textContent = "Erro ao reproduzir o vídeo localmente.";
+                    startBtn.disabled = false;
+                });
+
+                video.onended = () => { if (mediaRecorder.state !== "inactive") mediaRecorder.stop(); };
+
+            } catch (fatalErr) {
+                status.className = "erro";
+                status.textContent = `Erro crítico: ${fatalErr.message}`;
+                startBtn.disabled = false;
+            }
+        }
+    });
+</script>
+
+</body>
+</html>
