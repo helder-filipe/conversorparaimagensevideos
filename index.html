@@ -7,7 +7,7 @@
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            max-width: 700px;
+            max-width: 720px;
             margin: 40px auto;
             padding: 20px;
             background-color: #f0f2f5;
@@ -47,10 +47,15 @@
         }
         optgroup {
             font-weight: bold;
+        }
+        /* Estilo visual para separar fotos de vídeos no select */
+        optgroup[label^="---"] {
             color: #007bff;
+            background-color: #f8f9fa;
         }
         option {
             color: #333;
+            background-color: #fff;
         }
         input[type="color"] {
             height: 45px;
@@ -128,64 +133,100 @@
     <div class="field">
         <label for="conversionType">2. Selecionar Formato / Rede Social:</label>
         <select id="conversionType">
-            <!-- INSTAGRAM -->
-            <optgroup label="Instagram">
-                <option value="1080x1920">Stories / Reels / IGTV (9:16) [1080x1920]</option>
+
+            <!-- ========================================== -->
+            <!--             FORMATOS PARA FOTOS            -->
+            <!-- ========================================== -->
+            <optgroup label="--- FORMATOS PARA FOTOS ---" disabled></optgroup>
+
+            <optgroup label="📷 Instagram (Fotos)">
+                <option value="1080x1350">Feed Retrato (4:5) [1080x1350] - Máximo destaque</option>
                 <option value="1080x1080">Feed Quadrado (1:1) [1080x1080]</option>
-                <option value="1080x1350">Feed Retrato (4:5) [1080x1350]</option>
-                <option value="1080x566">Feed Paisagem (1.91:1) [1080x566]</option>
+                <option value="1080x1920">Stories / Destaques (9:16) [1080x1920]</option>
+                <option value="1080x566">Feed Horizontal (1.91:1) [1080x566]</option>
             </optgroup>
 
-            <!-- TIKTOK -->
-            <optgroup label="TikTok">
-                <option value="1080x1920">TikTok Vídeo Vertical (9:16) [1080x1920]</option>
-            </optgroup>
-
-            <!-- YOUTUBE -->
-            <optgroup label="YouTube">
-                <option value="1080x1920">YouTube Shorts (9:16) [1080x1920]</option>
-                <option value="1920x1080">YouTube Vídeo Standard / HD (16:9) [1920x1080]</option>
-                <option value="2560x1440">YouTube Vídeo 2K (16:9) [2560x1440]</option>
-                <option value="3840x2160">YouTube Vídeo 4K UHD (16:9) [3840x2160]</option>
-                <option value="2560x1440_banner">YouTube Banner de Canal (16:9) [2560x1440]</option>
-            </optgroup>
-
-            <!-- FACEBOOK -->
-            <optgroup label="Facebook">
-                <option value="1080x1920">Stories / Reels (9:16) [1080x1920]</option>
+            <optgroup label="📷 Facebook (Fotos)">
+                <option value="1200x630">Feed / Partilha de Link (1.91:1) [1200x630]</option>
                 <option value="1080x1080">Feed Quadrado (1:1) [1080x1080]</option>
-                <option value="1200x630">Feed Partilha de Link / Imagem (1.91:1) [1200x630]</option>
-                <option value="820x312">Capa de Página Facebook [820x312]</option>
+                <option value="1080x1920">Stories (9:16) [1080x1920]</option>
+                <option value="820x312">Capa de Página / Perfil [820x312]</option>
+                <option value="1920x1080">Capa de Grupo [1920x1080]</option>
+                <option value="1920x1005">Capa de Evento [1920x1005]</option>
             </optgroup>
 
-            <!-- LINKEDIN -->
-            <optgroup label="LinkedIn">
-                <option value="1080x1080">Publicação Quadrada (1:1) [1080x1080]</option>
+            <optgroup label="📷 LinkedIn (Fotos)">
                 <option value="1080x1350">Publicação Vertical (4:5) [1080x1350]</option>
+                <option value="1080x1080">Publicação Quadrada (1:1) [1080x1080]</option>
                 <option value="1200x627">Publicação Horizontal / Link (1.91:1) [1200x627]</option>
-                <option value="1584x396">Banner de Perfil LinkedIn [1584x396]</option>
+                <option value="1584x396">Banner de Perfil Pessoal [1584x396]</option>
+                <option value="1128x191">Banner de Página Empresa [1128x191]</option>
             </optgroup>
 
-            <!-- X / TWITTER -->
-            <optgroup label="X (Twitter)">
-                <option value="1200x1200">Publicação Quadrada (1:1) [1200x1200]</option>
+            <optgroup label="📷 X / Twitter (Fotos)">
                 <option value="1200x675">Publicação Horizontal (16:9) [1200x675]</option>
-                <option value="1500x500">Cabeçalho de Perfil X [1500x500]</option>
+                <option value="1200x1200">Publicação Quadrada (1:1) [1200x1200]</option>
+                <option value="1500x500">Cabeçalho de Perfil [1500x500]</option>
             </optgroup>
 
-            <!-- PINTEREST -->
-            <optgroup label="Pinterest">
+            <optgroup label="📷 Pinterest (Fotos)">
                 <option value="1080x1620">Pin Vertical Padrão (2:3) [1080x1620]</option>
-                <option value="1080x1920">Pin Vertial Longo / Idea Pin (9:16) [1080x1920]</option>
+                <option value="1080x1920">Pin Longo (9:16) [1080x1920]</option>
                 <option value="1080x1080">Pin Quadrado (1:1) [1080x1080]</option>
             </optgroup>
 
-            <!-- FORMATOS GENÉRICOS / TRADICIONAIS -->
-            <optgroup label="Formatos Padrão & Cinema">
-                <option value="1280x720">HD Standard (16:9) [1280x720]</option>
-                <option value="1024x768">Clássico / TV / Apresentações (4:3) [1024x768]</option>
+            <optgroup label="📷 YouTube (Fotos / Capas)">
+                <option value="1280x720">Miniatura / Thumbnail (16:9) [1280x720]</option>
+                <option value="2560x1440">Banner de Canal [2560x1440]</option>
+            </optgroup>
+
+            <!-- ========================================== -->
+            <!--            FORMATOS PARA VÍDEOS            -->
+            <!-- ========================================== -->
+            <optgroup label="--- FORMATOS PARA VÍDEOS ---" disabled></optgroup>
+
+            <optgroup label="🎬 Instagram (Vídeos)">
+                <option value="1080x1920">Reels / Stories (9:16) [1080x1920]</option>
+                <option value="1080x1350">Vídeo Feed Vertical (4:5) [1080x1350]</option>
+                <option value="1080x1080">Vídeo Feed Quadrado (1:1) [1080x1080]</option>
+            </optgroup>
+
+            <optgroup label="🎬 TikTok (Vídeos)">
+                <option value="1080x1920">Vídeo Vertical Padrão (9:16) [1080x1920]</option>
+            </optgroup>
+
+            <optgroup label="🎬 YouTube (Vídeos)">
+                <option value="1080x1920">YouTube Shorts (9:16) [1080x1920]</option>
+                <option value="1920x1080">Vídeo HD Standard (16:9) [1920x1080]</option>
+                <option value="2560x1440">Vídeo 2K QHD (16:9) [2560x1440]</option>
+                <option value="3840x2160">Vídeo 4K UHD (16:9) [3840x2160]</option>
+            </optgroup>
+
+            <optgroup label="🎬 Facebook (Vídeos)">
+                <option value="1080x1920">Reels / Stories (9:16) [1080x1920]</option>
+                <option value="1080x1080">Vídeo Feed Quadrado (1:1) [1080x1080]</option>
+                <option value="1920x1080">Vídeo Horizontal Standard (16:9) [1920x1080]</option>
+            </optgroup>
+
+            <optgroup label="🎬 LinkedIn (Vídeos)">
+                <option value="1080x1080">Vídeo Quadrado (1:1) [1080x1080]</option>
+                <option value="1080x1350">Vídeo Vertical (4:5) [1080x1350]</option>
+                <option value="1920x1080">Vídeo Horizontal (16:9) [1920x1080]</option>
+            </optgroup>
+
+            <optgroup label="🎬 X / Twitter (Vídeos)">
+                <option value="1080x1920">Vídeo Vertical (9:16) [1080x1920]</option>
+                <option value="1080x1080">Vídeo Quadrado (1:1) [1080x1080]</option>
+                <option value="1920x1080">Vídeo Horizontal (16:9) [1920x1080]</option>
+            </optgroup>
+
+            <!-- FORMATOS GENÉRICOS -->
+            <optgroup label="⚙️ Formatos Gerais / Cinema">
+                <option value="1280x720">HD Padrão (16:9) [1280x720]</option>
+                <option value="1024x768">Clássico / Apresentações (4:3) [1024x768]</option>
                 <option value="1680x720">Ultra-Panorâmico / Cinema (21:9) [1680x720]</option>
             </optgroup>
+
         </select>
     </div>
 
@@ -253,14 +294,14 @@
         }
     });
 
-    // Extrai a largura e altura diretamente do valor selecionado (ex: "1080x1920")
+    // Extrai largura e altura do valor da opção (ex: "1080x1920")
     function definirDimensoesCanvas(opcao) {
-        const dimensoes = opcao.split('_')[0].split('x');
+        const dimensoes = opcao.split('x');
         canvas.width = parseInt(dimensoes[0], 10);
         canvas.height = parseInt(dimensoes[1], 10);
     }
 
-    // Calcula o ajuste mantendo a proporção original (Paddings com a cor de fundo)
+    // Calcula as coordenadas mantendo a proporção (Letterbox / Pillarbox)
     function calcularDesenho(vWidth, vHeight, cWidth, cHeight) {
         const ratioVideo = vWidth / vHeight;
         const ratioCanvas = cWidth / cHeight;
