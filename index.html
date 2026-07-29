@@ -7,7 +7,7 @@
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            max-width: 650px;
+            max-width: 700px;
             margin: 40px auto;
             padding: 20px;
             background-color: #f0f2f5;
@@ -40,7 +40,17 @@
             border: 1px solid #ddd;
             border-radius: 6px;
             box-sizing: border-box;
-            font-size: 1em;
+            font-size: 0.95em;
+        }
+        select {
+            background-color: #fff;
+        }
+        optgroup {
+            font-weight: bold;
+            color: #007bff;
+        }
+        option {
+            color: #333;
         }
         input[type="color"] {
             height: 45px;
@@ -100,7 +110,7 @@
         .sucesso {
             color: #28a745;
         }
-        video, canvas, img {
+        video, canvas {
             display: none;
         }
     </style>
@@ -116,14 +126,66 @@
     </div>
 
     <div class="field">
-        <label for="conversionType">2. Selecionar Novo Rácio:</label>
+        <label for="conversionType">2. Selecionar Formato / Rede Social:</label>
         <select id="conversionType">
-            <option value="9:16">Vertical (9:16) - Stories, Reels, TikTok [720x1280]</option>
-            <option value="16:9">Horizontal (16:9) - Standard, YouTube [1280x720]</option>
-            <option value="1:1">Quadrado (1:1) - Feed Instagram/Facebook [1080x1080]</option>
-            <option value="4:5">Vertical Curto (4:5) - Feed Instagram Patrocinado [1080x1350]</option>
-            <option value="4:3">Clássico (4:3) - Apresentações/TV [1024x768]</option>
-            <option value="21:9">Ultra-Panorâmico (21:9) - Cinema [1680x720]</option>
+            <!-- INSTAGRAM -->
+            <optgroup label="Instagram">
+                <option value="1080x1920">Stories / Reels / IGTV (9:16) [1080x1920]</option>
+                <option value="1080x1080">Feed Quadrado (1:1) [1080x1080]</option>
+                <option value="1080x1350">Feed Retrato (4:5) [1080x1350]</option>
+                <option value="1080x566">Feed Paisagem (1.91:1) [1080x566]</option>
+            </optgroup>
+
+            <!-- TIKTOK -->
+            <optgroup label="TikTok">
+                <option value="1080x1920">TikTok Vídeo Vertical (9:16) [1080x1920]</option>
+            </optgroup>
+
+            <!-- YOUTUBE -->
+            <optgroup label="YouTube">
+                <option value="1080x1920">YouTube Shorts (9:16) [1080x1920]</option>
+                <option value="1920x1080">YouTube Vídeo Standard / HD (16:9) [1920x1080]</option>
+                <option value="2560x1440">YouTube Vídeo 2K (16:9) [2560x1440]</option>
+                <option value="3840x2160">YouTube Vídeo 4K UHD (16:9) [3840x2160]</option>
+                <option value="2560x1440_banner">YouTube Banner de Canal (16:9) [2560x1440]</option>
+            </optgroup>
+
+            <!-- FACEBOOK -->
+            <optgroup label="Facebook">
+                <option value="1080x1920">Stories / Reels (9:16) [1080x1920]</option>
+                <option value="1080x1080">Feed Quadrado (1:1) [1080x1080]</option>
+                <option value="1200x630">Feed Partilha de Link / Imagem (1.91:1) [1200x630]</option>
+                <option value="820x312">Capa de Página Facebook [820x312]</option>
+            </optgroup>
+
+            <!-- LINKEDIN -->
+            <optgroup label="LinkedIn">
+                <option value="1080x1080">Publicação Quadrada (1:1) [1080x1080]</option>
+                <option value="1080x1350">Publicação Vertical (4:5) [1080x1350]</option>
+                <option value="1200x627">Publicação Horizontal / Link (1.91:1) [1200x627]</option>
+                <option value="1584x396">Banner de Perfil LinkedIn [1584x396]</option>
+            </optgroup>
+
+            <!-- X / TWITTER -->
+            <optgroup label="X (Twitter)">
+                <option value="1200x1200">Publicação Quadrada (1:1) [1200x1200]</option>
+                <option value="1200x675">Publicação Horizontal (16:9) [1200x675]</option>
+                <option value="1500x500">Cabeçalho de Perfil X [1500x500]</option>
+            </optgroup>
+
+            <!-- PINTEREST -->
+            <optgroup label="Pinterest">
+                <option value="1080x1620">Pin Vertical Padrão (2:3) [1080x1620]</option>
+                <option value="1080x1920">Pin Vertial Longo / Idea Pin (9:16) [1080x1920]</option>
+                <option value="1080x1080">Pin Quadrado (1:1) [1080x1080]</option>
+            </optgroup>
+
+            <!-- FORMATOS GENÉRICOS / TRADICIONAIS -->
+            <optgroup label="Formatos Padrão & Cinema">
+                <option value="1280x720">HD Standard (16:9) [1280x720]</option>
+                <option value="1024x768">Clássico / TV / Apresentações (4:3) [1024x768]</option>
+                <option value="1680x720">Ultra-Panorâmico / Cinema (21:9) [1680x720]</option>
+            </optgroup>
         </select>
     </div>
 
@@ -159,7 +221,7 @@
 
     let fileUrl = null;
     let fileType = null; // 'video' ou 'image'
-    let sourceImage = null; // Guardará o objeto Image se for uma imagem
+    let sourceImage = null;
     let animationFrameId = null;
 
     fileInput.addEventListener('change', (e) => {
@@ -168,7 +230,6 @@
             if (fileUrl) URL.revokeObjectURL(fileUrl);
             fileUrl = URL.createObjectURL(file);
             
-            // Ocultar a área de progresso anterior
             progressContainer.style.display = 'none';
             progressBar.value = 0;
             status.className = "";
@@ -192,20 +253,14 @@
         }
     });
 
-    // Configura as dimensões do Canvas com base na seleção
-    function definirDimensoesCanvas(racio) {
-        switch(racio) {
-            case "9:16": canvas.width = 720; canvas.height = 1280; break;
-            case "16:9": canvas.width = 1280; canvas.height = 720; break;
-            case "1:1": canvas.width = 1080; canvas.height = 1080; break;
-            case "4:5": canvas.width = 1080; canvas.height = 1350; break;
-            case "4:3": canvas.width = 1024; canvas.height = 768; break;
-            case "21:9": canvas.width = 1680; canvas.height = 720; break;
-            default: canvas.width = 1280; canvas.height = 720;
-        }
+    // Extrai a largura e altura diretamente do valor selecionado (ex: "1080x1920")
+    function definirDimensoesCanvas(opcao) {
+        const dimensoes = opcao.split('_')[0].split('x');
+        canvas.width = parseInt(dimensoes[0], 10);
+        canvas.height = parseInt(dimensoes[1], 10);
     }
 
-    // Calcula as coordenadas e dimensões para o ajuste perfeito (Padding)
+    // Calcula o ajuste mantendo a proporção original (Paddings com a cor de fundo)
     function calcularDesenho(vWidth, vHeight, cWidth, cHeight) {
         const ratioVideo = vWidth / vHeight;
         const ratioCanvas = cWidth / cHeight;
@@ -226,37 +281,34 @@
     }
 
     startBtn.addEventListener('click', () => {
-        const racioSelecionado = conversionType.value;
-        definirDimensoesCanvas(racioSelecionado);
+        const opcaoSelecionada = conversionType.value;
+        definirDimensoesCanvas(opcaoSelecionada);
 
         if (fileType === 'image') {
-            // ---- PROCESSAMENTO DE IMAGEM (INSTANTÂNEO) ----
+            // ---- PROCESSAMENTO DE IMAGEM ----
             progressContainer.style.display = 'block';
-            progressLabel.style.display = 'none'; // Não precisa de barra para imagens
+            progressLabel.style.display = 'none';
             progressBar.style.display = 'none';
             status.className = "";
             status.textContent = "A processar imagem...";
 
-            // Limpar e aplicar cor de fundo
             ctx.fillStyle = bgColorInput.value;
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            // Ajustar imagem
             const dim = calcularDesenho(sourceImage.width, sourceImage.height, canvas.width, canvas.height);
             ctx.drawImage(sourceImage, 0, 0, sourceImage.width, sourceImage.height, dim.drawX, dim.drawY, dim.drawWidth, dim.drawHeight);
 
-            // Converter para ficheiro e descarregar
             const imgUrl = canvas.toDataURL("image/png");
             const a = document.createElement('a');
             a.href = imgUrl;
-            a.download = `imagem_convertida_${racioSelecionado.replace(':', '_')}.png`;
+            a.download = `imagem_convertida_${canvas.width}x${canvas.height}.png`;
             a.click();
 
             status.className = "sucesso";
             status.textContent = "Imagem convertida e descarregada com sucesso!";
 
         } else if (fileType === 'video') {
-            // ---- PROCESSAMENTO DE VÍDEO (TEMPO REAL) ----
+            // ---- PROCESSAMENTO DE VÍDEO ----
             if (!video.videoWidth || !video.videoHeight) {
                 status.className = "erro";
                 status.textContent = "Erro: O vídeo ainda não carregou totalmente.";
@@ -302,7 +354,7 @@
                     
                     const a = document.createElement('a');
                     a.href = url;
-                    a.download = `video_convertido_${racioSelecionado.replace(':', '_')}.${ext}`;
+                    a.download = `video_convertido_${canvas.width}x${canvas.height}.${ext}`;
                     a.click();
                     
                     progressBar.value = 100;
