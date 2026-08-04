@@ -3,11 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Conversor de Rácio: Vídeo e Imagem</title>
+    <title>Conversor de Rácio: Vídeo e Imagem (Lote & ZIP)</title>
+    <!-- JSZip para criar ficheiros ZIP diretamente no navegador -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <!-- jsPDF para gerar PDFs de imagens -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            max-width: 720px;
+            max-width: 780px;
             margin: 40px auto;
             padding: 20px;
             background-color: #f0f2f5;
@@ -24,6 +28,36 @@
             color: #007bff;
             margin-top: 0;
             margin-bottom: 25px;
+        }
+        .tabs {
+            display: flex;
+            margin-bottom: 25px;
+            border-bottom: 2px solid #eee;
+        }
+        .tab-btn {
+            flex: 1;
+            padding: 12px;
+            text-align: center;
+            background: #f8f9fa;
+            border: none;
+            border-bottom: 3px solid transparent;
+            font-weight: 600;
+            cursor: pointer;
+            color: #666;
+            transition: all 0.2s;
+            margin-top: 0;
+            border-radius: 6px 6px 0 0;
+        }
+        .tab-btn.active {
+            background: #fff;
+            color: #007bff;
+            border-bottom-color: #007bff;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
         }
         .field {
             margin-bottom: 20px;
@@ -48,7 +82,6 @@
         optgroup {
             font-weight: bold;
         }
-        /* Estilo visual para separar fotos de vídeos no select */
         optgroup[label^="---"] {
             color: #007bff;
             background-color: #f8f9fa;
@@ -98,7 +131,7 @@
             border-radius: 4px;
             transition: width 0.1s linear;
         }
-        #status {
+        #status, #batchStatus {
             font-weight: 600;
             text-align: center;
             font-size: 0.95em;
@@ -118,129 +151,186 @@
         video, canvas {
             display: none;
         }
+        .file-list {
+            max-height: 150px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            padding: 8px 12px;
+            background: #fafafa;
+            font-size: 0.85em;
+            margin-top: 5px;
+        }
+        .file-item {
+            padding: 4px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .file-item:last-child {
+            border-bottom: none;
+        }
     </style>
 </head>
 <body>
 
 <div class="container">
     <h2>Conversor de Rácio (Vídeo & Imagem)</h2>
-    
-    <div class="field">
-        <label for="fileInput">1. Escolher Ficheiro Original (Vídeo ou Imagem):</label>
-        <input type="file" id="fileInput" accept="video/*, image/*">
+
+    <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('single')">Ficheiro Único</button>
+        <button class="tab-btn" onclick="switchTab('batch')">Processamento em Massa (Pasta / ZIP)</button>
     </div>
 
-    <div class="field">
-        <label for="conversionType">2. Selecionar Formato / Rede Social:</label>
-        <select id="conversionType">
+    <!-- PAINEL FICHEIRO ÚNICO -->
+    <div id="singleTab" class="tab-content active">
+        <div class="field">
+            <label for="fileInput">1. Escolher Ficheiro Original (Vídeo ou Imagem):</label>
+            <input type="file" id="fileInput" accept="video/*, image/*">
+        </div>
 
-            <!-- ========================================== -->
-            <!--             FORMATOS PARA FOTOS            -->
-            <!-- ========================================== -->
-            <optgroup label="--- FORMATOS PARA FOTOS ---" disabled></optgroup>
+        <div class="field">
+            <label for="conversionType">2. Selecionar Formato / Rede Social:</label>
+            <select class="conversionTypeSelect">
+                <!-- Opções de Formatos Fotos -->
+                <optgroup label="--- FORMATOS PARA FOTOS ---" disabled></optgroup>
+                <optgroup label="🪪 Fotografias Tipo Passe">
+                    <option value="413x531" data-cm-w="3.5" data-cm-h="4.5">Foto Passe Normal (3.5 x 4.5 cm @ 300 DPI) [413x531]</option>
+                    <option value="331x354" data-cm-w="2.8" data-cm-h="3.0">Foto Passe Especial (2.8 x 3.0 cm @ 300 DPI) [331x354]</option>
+                </optgroup>
+                <optgroup label="📷 Instagram (Fotos)">
+                    <option value="1080x1350">Feed Retrato (4:5) [1080x1350] - Máximo destaque</option>
+                    <option value="1080x1080">Feed Quadrado (1:1) [1080x1080]</option>
+                    <option value="1080x1920">Stories / Destaques (9:16) [1080x1920]</option>
+                    <option value="1080x566">Feed Horizontal (1.91:1) [1080x566]</option>
+                </optgroup>
+                <optgroup label="📷 Facebook (Fotos)">
+                    <option value="1200x630">Feed / Partilha de Link (1.91:1) [1200x630]</option>
+                    <option value="1080x1080">Feed Quadrado (1:1) [1080x1080]</option>
+                    <option value="1080x1920">Stories (9:16) [1080x1920]</option>
+                    <option value="820x312">Capa de Página / Perfil [820x312]</option>
+                    <option value="1920x1080">Capa de Grupo [1920x1080]</option>
+                    <option value="1920x1005">Capa de Evento [1920x1005]</option>
+                </optgroup>
+                <optgroup label="📷 LinkedIn (Fotos)">
+                    <option value="1080x1350">Publicação Vertical (4:5) [1080x1350]</option>
+                    <option value="1080x1080">Publicação Quadrada (1:1) [1080x1080]</option>
+                    <option value="1200x627">Publicação Horizontal / Link (1.91:1) [1200x627]</option>
+                    <option value="1584x396">Banner de Perfil Pessoal [1584x396]</option>
+                    <option value="1128x191">Banner de Página Empresa [1128x191]</option>
+                </optgroup>
+                <optgroup label="📷 X / Twitter (Fotos)">
+                    <option value="1200x675">Publicação Horizontal (16:9) [1200x675]</option>
+                    <option value="1200x1200">Publicação Quadrada (1:1) [1200x1200]</option>
+                    <option value="1500x500">Cabeçalho de Perfil [1500x500]</option>
+                </optgroup>
+                <optgroup label="📷 Pinterest (Fotos)">
+                    <option value="1080x1620">Pin Vertical Padrão (2:3) [1080x1620]</option>
+                    <option value="1080x1920">Pin Longo (9:16) [1080x1920]</option>
+                    <option value="1080x1080">Pin Quadrado (1:1) [1080x1080]</option>
+                </optgroup>
+                <optgroup label="📷 YouTube (Fotos / Capas)">
+                    <option value="1280x720">Miniatura / Thumbnail (16:9) [1280x720]</option>
+                    <option value="2560x1440">Banner de Canal [2560x1440]</option>
+                </optgroup>
 
-            <optgroup label="📷 Instagram (Fotos)">
-                <option value="1080x1350">Feed Retrato (4:5) [1080x1350] - Máximo destaque</option>
-                <option value="1080x1080">Feed Quadrado (1:1) [1080x1080]</option>
-                <option value="1080x1920">Stories / Destaques (9:16) [1080x1920]</option>
-                <option value="1080x566">Feed Horizontal (1.91:1) [1080x566]</option>
-            </optgroup>
+                <!-- Opções de Formatos Vídeos -->
+                <optgroup label="--- FORMATOS PARA VÍDEOS ---" disabled></optgroup>
+                <optgroup label="🎬 Instagram (Vídeos)">
+                    <option value="1080x1920">Reels / Stories (9:16) [1080x1920]</option>
+                    <option value="1080x1350">Vídeo Feed Vertical (4:5) [1080x1350]</option>
+                    <option value="1080x1080">Vídeo Feed Quadrado (1:1) [1080x1080]</option>
+                </optgroup>
+                <optgroup label="🎬 TikTok (Vídeos)">
+                    <option value="1080x1920">Vídeo Vertical Padrão (9:16) [1080x1920]</option>
+                </optgroup>
+                <optgroup label="🎬 YouTube (Vídeos)">
+                    <option value="1080x1920">YouTube Shorts (9:16) [1080x1920]</option>
+                    <option value="1920x1080">Vídeo HD Standard (16:9) [1920x1080]</option>
+                    <option value="2560x1440">Vídeo 2K QHD (16:9) [2560x1440]</option>
+                    <option value="3840x2160">Vídeo 4K UHD (16:9) [3840x2160]</option>
+                </optgroup>
+                <optgroup label="🎬 Facebook (Vídeos)">
+                    <option value="1080x1920">Reels / Stories (9:16) [1080x1920]</option>
+                    <option value="1080x1080">Vídeo Feed Quadrado (1:1) [1080x1080]</option>
+                    <option value="1920x1080">Vídeo Horizontal Standard (16:9) [1920x1080]</option>
+                </optgroup>
+                <optgroup label="🎬 LinkedIn (Vídeos)">
+                    <option value="1080x1080">Vídeo Quadrado (1:1) [1080x1080]</option>
+                    <option value="1080x1350">Vídeo Vertical (4:5) [1080x1350]</option>
+                    <option value="1920x1080">Vídeo Horizontal (16:9) [1920x1080]</option>
+                </optgroup>
+                <optgroup label="🎬 X / Twitter (Vídeos)">
+                    <option value="1080x1920">Vídeo Vertical (9:16) [1080x1920]</option>
+                    <option value="1080x1080">Vídeo Quadrado (1:1) [1080x1080]</option>
+                    <option value="1920x1080">Vídeo Horizontal (16:9) [1920x1080]</option>
+                </optgroup>
+                <optgroup label="⚙️ Formatos Gerais / Cinema">
+                    <option value="1280x720">HD Padrão (16:9) [1280x720]</option>
+                    <option value="1024x768">Clássico / Apresentações (4:3) [1024x768]</option>
+                    <option value="1680x720">Ultra-Panorâmico / Cinema (21:9) [1680x720]</option>
+                </optgroup>
+            </select>
+        </div>
 
-            <optgroup label="📷 Facebook (Fotos)">
-                <option value="1200x630">Feed / Partilha de Link (1.91:1) [1200x630]</option>
-                <option value="1080x1080">Feed Quadrado (1:1) [1080x1080]</option>
-                <option value="1080x1920">Stories (9:16) [1080x1920]</option>
-                <option value="820x312">Capa de Página / Perfil [820x312]</option>
-                <option value="1920x1080">Capa de Grupo [1920x1080]</option>
-                <option value="1920x1005">Capa de Evento [1920x1005]</option>
-            </optgroup>
+        <div class="field">
+            <label for="imgFormat">3. Formato de Saída para Imagens:</label>
+            <select id="imgFormat">
+                <option value="png">PNG (.png) - Sem perda de qualidade</option>
+                <option value="jpg">JPG / JPEG (.jpg) - Mais leve</option>
+                <option value="pdf">PDF (.pdf) - Próprio para Impressão</option>
+            </select>
+        </div>
 
-            <optgroup label="📷 LinkedIn (Fotos)">
-                <option value="1080x1350">Publicação Vertical (4:5) [1080x1350]</option>
-                <option value="1080x1080">Publicação Quadrada (1:1) [1080x1080]</option>
-                <option value="1200x627">Publicação Horizontal / Link (1.91:1) [1200x627]</option>
-                <option value="1584x396">Banner de Perfil Pessoal [1584x396]</option>
-                <option value="1128x191">Banner de Página Empresa [1128x191]</option>
-            </optgroup>
+        <div class="field">
+            <label for="bgColor">4. Cor das Barras de Fundo (Se aplicável):</label>
+            <input type="color" id="bgColor" value="#ffffff">
+        </div>
 
-            <optgroup label="📷 X / Twitter (Fotos)">
-                <option value="1200x675">Publicação Horizontal (16:9) [1200x675]</option>
-                <option value="1200x1200">Publicação Quadrada (1:1) [1200x1200]</option>
-                <option value="1500x500">Cabeçalho de Perfil [1500x500]</option>
-            </optgroup>
+        <button id="startBtn" disabled>Converter e Descarregar</button>
 
-            <optgroup label="📷 Pinterest (Fotos)">
-                <option value="1080x1620">Pin Vertical Padrão (2:3) [1080x1620]</option>
-                <option value="1080x1920">Pin Longo (9:16) [1080x1920]</option>
-                <option value="1080x1080">Pin Quadrado (1:1) [1080x1080]</option>
-            </optgroup>
-
-            <optgroup label="📷 YouTube (Fotos / Capas)">
-                <option value="1280x720">Miniatura / Thumbnail (16:9) [1280x720]</option>
-                <option value="2560x1440">Banner de Canal [2560x1440]</option>
-            </optgroup>
-
-            <!-- ========================================== -->
-            <!--            FORMATOS PARA VÍDEOS            -->
-            <!-- ========================================== -->
-            <optgroup label="--- FORMATOS PARA VÍDEOS ---" disabled></optgroup>
-
-            <optgroup label="🎬 Instagram (Vídeos)">
-                <option value="1080x1920">Reels / Stories (9:16) [1080x1920]</option>
-                <option value="1080x1350">Vídeo Feed Vertical (4:5) [1080x1350]</option>
-                <option value="1080x1080">Vídeo Feed Quadrado (1:1) [1080x1080]</option>
-            </optgroup>
-
-            <optgroup label="🎬 TikTok (Vídeos)">
-                <option value="1080x1920">Vídeo Vertical Padrão (9:16) [1080x1920]</option>
-            </optgroup>
-
-            <optgroup label="🎬 YouTube (Vídeos)">
-                <option value="1080x1920">YouTube Shorts (9:16) [1080x1920]</option>
-                <option value="1920x1080">Vídeo HD Standard (16:9) [1920x1080]</option>
-                <option value="2560x1440">Vídeo 2K QHD (16:9) [2560x1440]</option>
-                <option value="3840x2160">Vídeo 4K UHD (16:9) [3840x2160]</option>
-            </optgroup>
-
-            <optgroup label="🎬 Facebook (Vídeos)">
-                <option value="1080x1920">Reels / Stories (9:16) [1080x1920]</option>
-                <option value="1080x1080">Vídeo Feed Quadrado (1:1) [1080x1080]</option>
-                <option value="1920x1080">Vídeo Horizontal Standard (16:9) [1920x1080]</option>
-            </optgroup>
-
-            <optgroup label="🎬 LinkedIn (Vídeos)">
-                <option value="1080x1080">Vídeo Quadrado (1:1) [1080x1080]</option>
-                <option value="1080x1350">Vídeo Vertical (4:5) [1080x1350]</option>
-                <option value="1920x1080">Vídeo Horizontal (16:9) [1920x1080]</option>
-            </optgroup>
-
-            <optgroup label="🎬 X / Twitter (Vídeos)">
-                <option value="1080x1920">Vídeo Vertical (9:16) [1080x1920]</option>
-                <option value="1080x1080">Vídeo Quadrado (1:1) [1080x1080]</option>
-                <option value="1920x1080">Vídeo Horizontal (16:9) [1920x1080]</option>
-            </optgroup>
-
-            <!-- FORMATOS GENÉRICOS -->
-            <optgroup label="⚙️ Formatos Gerais / Cinema">
-                <option value="1280x720">HD Padrão (16:9) [1280x720]</option>
-                <option value="1024x768">Clássico / Apresentações (4:3) [1024x768]</option>
-                <option value="1680x720">Ultra-Panorâmico / Cinema (21:9) [1680x720]</option>
-            </optgroup>
-
-        </select>
+        <div class="progress-container" id="progressContainer">
+            <label id="progressLabel" for="progressBar">Progresso:</label>
+            <progress id="progressBar" value="0" max="100"></progress>
+            <div id="status"></div>
+        </div>
     </div>
 
-    <div class="field">
-        <label for="bgColor">3. Cor das Barras de Fundo:</label>
-        <input type="color" id="bgColor" value="#000000">
-    </div>
+    <!-- PAINEL EM MASSA (PASTA / VÁRIOS FICHEIROS) -->
+    <div id="batchTab" class="tab-content">
+        <div class="field">
+            <label for="folderInput">1. Selecionar Pasta ou Múltiplos Ficheiros:</label>
+            <input type="file" id="folderInput" webkitdirectory directory multiple accept="video/*, image/*">
+            <div id="fileListContainer" style="display:none; margin-top: 10px;">
+                <label>Ficheiros detetados (<span id="fileCount">0</span>):</label>
+                <div class="file-list" id="fileList"></div>
+            </div>
+        </div>
 
-    <button id="startBtn" disabled>Converter e Descarregar</button>
-    
-    <div class="progress-container" id="progressContainer">
-        <label id="progressLabel" for="progressBar">Progresso:</label>
-        <progress id="progressBar" value="0" max="100"></progress>
-        <div id="status"></div>
+        <div class="field">
+            <label for="batchConversionType">2. Selecionar Formato de Saída em Massa:</label>
+            <select id="batchConversionType" class="conversionTypeSelect"></select>
+        </div>
+
+        <div class="field">
+            <label for="batchImgFormat">3. Formato de Saída para Imagens:</label>
+            <select id="batchImgFormat">
+                <option value="png">PNG (.png) - Sem perda de qualidade</option>
+                <option value="jpg">JPG / JPEG (.jpg) - Mais leve</option>
+                <option value="pdf">PDF (.pdf) - Próprio para Impressão</option>
+            </select>
+        </div>
+
+        <div class="field">
+            <label for="batchBgColor">4. Cor das Barras de Fundo (Se aplicável):</label>
+            <input type="color" id="batchBgColor" value="#ffffff">
+        </div>
+
+        <button id="startBatchBtn" disabled>Processar Pasta e Gerar ZIP</button>
+
+        <div class="progress-container" id="batchProgressContainer">
+            <label id="batchProgressLabel" for="batchProgressBar">Progresso Geral:</label>
+            <progress id="batchProgressBar" value="0" max="100"></progress>
+            <div id="batchStatus"></div>
+        </div>
     </div>
 </div>
 
@@ -248,22 +338,53 @@
 <canvas id="processingCanvas"></canvas>
 
 <script>
+    const singleSelect = document.querySelector('#singleTab .conversionTypeSelect');
+    const batchSelect = document.getElementById('batchConversionType');
+    batchSelect.innerHTML = singleSelect.innerHTML;
+
+    function switchTab(tab) {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        
+        if (tab === 'single') {
+            document.querySelectorAll('.tab-btn')[0].classList.add('active');
+            document.getElementById('singleTab').classList.add('active');
+        } else {
+            document.querySelectorAll('.tab-btn')[1].classList.add('active');
+            document.getElementById('batchTab').classList.add('active');
+        }
+    }
+
     const fileInput = document.getElementById('fileInput');
-    const conversionType = document.getElementById('conversionType');
+    const conversionType = singleSelect;
+    const imgFormatInput = document.getElementById('imgFormat');
     const bgColorInput = document.getElementById('bgColor');
     const startBtn = document.getElementById('startBtn');
     const progressContainer = document.getElementById('progressContainer');
     const progressLabel = document.getElementById('progressLabel');
     const progressBar = document.getElementById('progressBar');
     const status = document.getElementById('status');
+
+    const folderInput = document.getElementById('folderInput');
+    const batchImgFormatInput = document.getElementById('batchImgFormat');
+    const batchBgColor = document.getElementById('batchBgColor');
+    const startBatchBtn = document.getElementById('startBatchBtn');
+    const batchProgressContainer = document.getElementById('batchProgressContainer');
+    const batchProgressBar = document.getElementById('batchProgressBar');
+    const batchStatus = document.getElementById('batchStatus');
+    const fileListContainer = document.getElementById('fileListContainer');
+    const fileList = document.getElementById('fileList');
+    const fileCount = document.getElementById('fileCount');
+
     const video = document.getElementById('sourceVideo');
     const canvas = document.getElementById('processingCanvas');
     const ctx = canvas.getContext('2d');
 
     let fileUrl = null;
-    let fileType = null; // 'video' ou 'image'
+    let fileType = null;
     let sourceImage = null;
     let animationFrameId = null;
+    let batchFiles = [];
 
     fileInput.addEventListener('change', (e) => {
         const file = e.target.files[0];
@@ -294,31 +415,31 @@
         }
     });
 
-    // Extrai largura e altura do valor da opção (ex: "1080x1920")
     function definirDimensoesCanvas(opcao) {
         const dimensoes = opcao.split('x');
         canvas.width = parseInt(dimensoes[0], 10);
         canvas.height = parseInt(dimensoes[1], 10);
     }
 
-    // Calcula as coordenadas mantendo a proporção (Letterbox / Pillarbox)
-    function calcularDesenho(vWidth, vHeight, cWidth, cHeight) {
-        const ratioVideo = vWidth / vHeight;
-        const ratioCanvas = cWidth / cHeight;
-        let drawWidth, drawHeight, drawX, drawY;
+    // LÓGICA CORRIGIDA: Corte proporcional centrado (Cover/Crop) sem distorcer nem esticar
+    function calcularCorteProporcional(srcW, srcH, targetW, targetH) {
+        const srcRatio = srcW / srcH;
+        const targetRatio = targetW / targetH;
 
-        if (ratioVideo > ratioCanvas) {
-            drawWidth = cWidth;
-            drawHeight = cWidth / ratioVideo;
-            drawX = 0;
-            drawY = (cHeight - drawHeight) / 2;
-        } else {
-            drawHeight = cHeight;
-            drawWidth = cHeight * ratioVideo;
-            drawX = (cWidth - drawWidth) / 2;
+        let drawW, drawH, drawX, drawY;
+
+        if (srcRatio > targetRatio) {
+            drawH = targetH;
+            drawW = targetH * srcRatio;
+            drawX = (targetW - drawW) / 2;
             drawY = 0;
+        } else {
+            drawW = targetW;
+            drawH = targetW / srcRatio;
+            drawX = 0;
+            drawY = (targetH - drawH) / 2;
         }
-        return { drawX, drawY, drawWidth, drawHeight };
+        return { drawX, drawY, drawW, drawH };
     }
 
     startBtn.addEventListener('click', () => {
@@ -326,7 +447,6 @@
         definirDimensoesCanvas(opcaoSelecionada);
 
         if (fileType === 'image') {
-            // ---- PROCESSAMENTO DE IMAGEM ----
             progressContainer.style.display = 'block';
             progressLabel.style.display = 'none';
             progressBar.style.display = 'none';
@@ -336,20 +456,52 @@
             ctx.fillStyle = bgColorInput.value;
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            const dim = calcularDesenho(sourceImage.width, sourceImage.height, canvas.width, canvas.height);
-            ctx.drawImage(sourceImage, 0, 0, sourceImage.width, sourceImage.height, dim.drawX, dim.drawY, dim.drawWidth, dim.drawHeight);
+            const dim = calcularCorteProporcional(sourceImage.width, sourceImage.height, canvas.width, canvas.height);
+            ctx.drawImage(sourceImage, 0, 0, sourceImage.width, sourceImage.height, dim.drawX, dim.drawY, dim.drawW, dim.drawH);
 
-            const imgUrl = canvas.toDataURL("image/png");
-            const a = document.createElement('a');
-            a.href = imgUrl;
-            a.download = `imagem_convertida_${canvas.width}x${canvas.height}.png`;
-            a.click();
+            const format = imgFormatInput.value;
+            const filename = `imagem_convertida_${canvas.width}x${canvas.height}`;
+
+            const selectedOption = conversionType.options[conversionType.selectedIndex];
+            const cmW = parseFloat(selectedOption.getAttribute('data-cm-w'));
+            const cmH = parseFloat(selectedOption.getAttribute('data-cm-h'));
+
+            if (format === 'pdf') {
+                const imgData = canvas.toDataURL('image/jpeg', 0.98);
+                const { jsPDF } = window.jspdf;
+
+                let pdf;
+                if (cmW && cmH) {
+                    // Para foto passe: cria o PDF com as dimensões físicas exatas em milímetros
+                    pdf = new jsPDF({
+                        orientation: cmW > cmH ? 'landscape' : 'portrait',
+                        unit: 'mm',
+                        format: [cmW * 10, cmH * 10]
+                    });
+                    pdf.addImage(imgData, 'JPEG', 0, 0, cmW * 10, cmH * 10);
+                } else {
+                    const orientation = canvas.width > canvas.height ? 'landscape' : 'portrait';
+                    pdf = new jsPDF({
+                        orientation: orientation,
+                        unit: 'px',
+                        format: [canvas.width, canvas.height]
+                    });
+                    pdf.addImage(imgData, 'JPEG', 0, 0, canvas.width, canvas.height);
+                }
+                pdf.save(`${filename}.pdf`);
+            } else {
+                const mime = format === 'jpg' ? 'image/jpeg' : 'image/png';
+                const imgUrl = canvas.toDataURL(mime, 0.98);
+                const a = document.createElement('a');
+                a.href = imgUrl;
+                a.download = `${filename}.${format}`;
+                a.click();
+            }
 
             status.className = "sucesso";
-            status.textContent = "Imagem convertida e descarregada com sucesso!";
+            status.textContent = `Imagem convertida sem distorção para ${format.toUpperCase()}!`;
 
         } else if (fileType === 'video') {
-            // ---- PROCESSAMENTO DE VÍDEO ----
             if (!video.videoWidth || !video.videoHeight) {
                 status.className = "erro";
                 status.textContent = "Erro: O vídeo ainda não carregou totalmente.";
@@ -411,8 +563,8 @@
                     ctx.fillStyle = bgColorInput.value;
                     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-                    const dim = calcularDesenho(video.videoWidth, video.videoHeight, canvas.width, canvas.height);
-                    ctx.drawImage(video, 0, 0, video.videoWidth, video.videoHeight, dim.drawX, dim.drawY, dim.drawWidth, dim.drawHeight);
+                    const dim = calcularCorteProporcional(video.videoWidth, video.videoHeight, canvas.width, canvas.height);
+                    ctx.drawImage(video, 0, 0, video.videoWidth, video.videoHeight, dim.drawX, dim.drawY, dim.drawW, dim.drawH);
 
                     if (video.duration) {
                         const pct = (video.currentTime / video.duration) * 100;
@@ -437,6 +589,217 @@
                 status.textContent = `Erro crítico: ${fatalErr.message}`;
                 startBtn.disabled = false;
             }
+        }
+    });
+
+    folderInput.addEventListener('change', (e) => {
+        const files = Array.from(e.target.files);
+        batchFiles = files.filter(f => f.type.startsWith('image/') || f.type.startsWith('video/'));
+        
+        fileList.innerHTML = '';
+        if (batchFiles.length > 0) {
+            fileCount.textContent = batchFiles.length;
+            fileListContainer.style.display = 'block';
+            batchFiles.forEach(f => {
+                const div = document.createElement('div');
+                div.className = 'file-item';
+                div.textContent = `📄 ${f.name} (${f.type.startsWith('image/') ? 'Imagem' : 'Vídeo'})`;
+                fileList.appendChild(div);
+            });
+            startBatchBtn.disabled = false;
+            batchStatus.textContent = "";
+            batchStatus.className = "";
+        } else {
+            fileListContainer.style.display = 'none';
+            startBatchBtn.disabled = true;
+            batchStatus.className = "erro";
+            batchStatus.textContent = "Nenhum ficheiro de imagem ou vídeo válido foi encontrado.";
+        }
+    });
+
+    function processImageBlob(file, targetWidth, targetHeight, color, format, cmW, cmH) {
+        return new Promise((resolve, reject) => {
+            const img = new Image();
+            const url = URL.createObjectURL(file);
+            img.onload = () => {
+                canvas.width = targetWidth;
+                canvas.height = targetHeight;
+                ctx.fillStyle = color;
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                const dim = calcularCorteProporcional(img.width, img.height, canvas.width, canvas.height);
+                ctx.drawImage(img, 0, 0, img.width, img.height, dim.drawX, dim.drawY, dim.drawW, dim.drawH);
+
+                URL.revokeObjectURL(url);
+
+                if (format === 'pdf') {
+                    const imgData = canvas.toDataURL('image/jpeg', 0.98);
+                    const { jsPDF } = window.jspdf;
+                    let pdf;
+
+                    if (cmW && cmH) {
+                        pdf = new jsPDF({
+                            orientation: cmW > cmH ? 'landscape' : 'portrait',
+                            unit: 'mm',
+                            format: [cmW * 10, cmH * 10]
+                        });
+                        pdf.addImage(imgData, 'JPEG', 0, 0, cmW * 10, cmH * 10);
+                    } else {
+                        const orientation = targetWidth > targetHeight ? 'landscape' : 'portrait';
+                        pdf = new jsPDF({
+                            orientation: orientation,
+                            unit: 'px',
+                            format: [targetWidth, targetHeight]
+                        });
+                        pdf.addImage(imgData, 'JPEG', 0, 0, targetWidth, targetHeight);
+                    }
+                    const pdfBlob = pdf.output('blob');
+                    resolve({ blob: pdfBlob, ext: 'pdf' });
+                } else {
+                    const mime = format === 'jpg' ? 'image/jpeg' : 'image/png';
+                    canvas.toBlob((blob) => {
+                        if (blob) resolve({ blob, ext: format });
+                        else reject(new Error("Erro ao converter imagem em Blob"));
+                    }, mime, 0.98);
+                }
+            };
+            img.onerror = () => {
+                URL.revokeObjectURL(url);
+                reject(new Error("Falha ao carregar a imagem: " + file.name));
+            };
+            img.src = url;
+        });
+    }
+
+    function processVideoBlob(file, targetWidth, targetHeight, color) {
+        return new Promise((resolve, reject) => {
+            const v = document.createElement('video');
+            v.muted = true;
+            v.playsInline = true;
+            const url = URL.createObjectURL(file);
+            v.src = url;
+
+            v.onloadedmetadata = () => {
+                canvas.width = targetWidth;
+                canvas.height = targetHeight;
+
+                const stream = canvas.captureStream(30);
+                try {
+                    const videoStream = v.captureStream ? v.captureStream() : (v.mozCaptureStream ? v.mozCaptureStream() : null);
+                    if (videoStream && videoStream.getAudioTracks().length > 0) {
+                        stream.addTrack(videoStream.getAudioTracks()[0]);
+                    }
+                } catch (e) { console.warn("Sem áudio:", e); }
+
+                let mediaRecorder;
+                const tipos = ['video/webm', 'video/webm;codecs=vp8', 'video/mp4;codecs=avc1'];
+                for (let t of tipos) {
+                    if (MediaRecorder.isTypeSupported(t)) {
+                        mediaRecorder = new MediaRecorder(stream, { mimeType: t });
+                        break;
+                    }
+                }
+                if (!mediaRecorder) mediaRecorder = new MediaRecorder(stream);
+
+                const chunks = [];
+                let localAnimId = null;
+
+                mediaRecorder.ondataavailable = (e) => { if (e.data && e.data.size > 0) chunks.push(e.data); };
+
+                mediaRecorder.onstop = () => {
+                    cancelAnimationFrame(localAnimId);
+                    URL.revokeObjectURL(url);
+                    const ext = mediaRecorder.mimeType.includes('mp4') ? 'mp4' : 'webm';
+                    const blob = new Blob(chunks, { type: mediaRecorder.mimeType });
+                    resolve({ blob, ext });
+                };
+
+                function draw() {
+                    if (v.paused || v.ended) return;
+                    ctx.fillStyle = color;
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                    const dim = calcularCorteProporcional(v.videoWidth, v.videoHeight, canvas.width, canvas.height);
+                    ctx.drawImage(v, 0, 0, v.videoWidth, v.videoHeight, dim.drawX, dim.drawY, dim.drawW, dim.drawH);
+                    localAnimId = requestAnimationFrame(draw);
+                }
+
+                mediaRecorder.start();
+                v.currentTime = 0;
+                v.play().then(() => { draw(); }).catch(err => {
+                    URL.revokeObjectURL(url);
+                    reject(err);
+                });
+
+                v.onended = () => {
+                    if (mediaRecorder.state !== "inactive") mediaRecorder.stop();
+                };
+            };
+
+            v.onerror = () => {
+                URL.revokeObjectURL(url);
+                reject(new Error("Erro ao carregar o vídeo: " + file.name));
+            };
+        });
+    }
+
+    startBatchBtn.addEventListener('click', async () => {
+        if (batchFiles.length === 0) return;
+
+        const opcao = batchSelect.value;
+        const [targetW, targetH] = opcao.split('x').map(n => parseInt(n, 10));
+        const color = batchBgColor.value;
+        const format = batchImgFormatInput.value;
+
+        const selectedOption = batchSelect.options[batchSelect.selectedIndex];
+        const cmW = parseFloat(selectedOption.getAttribute('data-cm-w'));
+        const cmH = parseFloat(selectedOption.getAttribute('data-cm-h'));
+
+        startBatchBtn.disabled = true;
+        batchProgressContainer.style.display = 'block';
+        batchProgressBar.value = 0;
+        batchStatus.className = "";
+
+        const zip = new JSZip();
+        const total = batchFiles.length;
+
+        for (let i = 0; i < total; i++) {
+            const file = batchFiles[i];
+            const originalName = file.name.substring(0, file.name.lastIndexOf('.')) || file.name;
+            batchStatus.textContent = `A processar ficheiro ${i + 1} de ${total}: ${file.name}...`;
+
+            try {
+                if (file.type.startsWith('image/')) {
+                    const { blob, ext } = await processImageBlob(file, targetW, targetH, color, format, cmW, cmH);
+                    zip.file(`${originalName}_${targetW}x${targetH}.${ext}`, blob);
+                } else if (file.type.startsWith('video/')) {
+                    const { blob, ext } = await processVideoBlob(file, targetW, targetH, color);
+                    zip.file(`${originalName}_${targetW}x${targetH}.${ext}`, blob);
+                }
+            } catch (err) {
+                console.error(`Erro ao processar ${file.name}:`, err);
+            }
+
+            const pct = Math.round(((i + 1) / total) * 100);
+            batchProgressBar.value = pct;
+        }
+
+        batchStatus.textContent = "A gerar ficheiro ZIP final...";
+        try {
+            const zipContent = await zip.generateAsync({ type: "blob" });
+            const zipUrl = URL.createObjectURL(zipContent);
+
+            const a = document.createElement('a');
+            a.href = zipUrl;
+            a.download = `ficheiros_convertidos_${targetW}x${targetH}.zip`;
+            a.click();
+
+            batchStatus.className = "sucesso";
+            batchStatus.textContent = "Processamento em massa concluído! Ficheiro ZIP descarregado com sucesso.";
+        } catch (zipErr) {
+            batchStatus.className = "erro";
+            batchStatus.textContent = "Erro ao compilar o ficheiro ZIP.";
+        } finally {
+            startBatchBtn.disabled = false;
         }
     });
 </script>
