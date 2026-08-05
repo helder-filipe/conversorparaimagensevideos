@@ -193,8 +193,8 @@
                 <!-- Opções de Formatos Fotos -->
                 <optgroup label="--- FORMATOS PARA FOTOS ---" disabled></optgroup>
                 <optgroup label="🪪 Fotografias Tipo Passe">
-                    <option value="413x531" data-cm-w="3.5" data-cm-h="4.5">Foto Passe Normal (3.5 x 4.5 cm @ 300 DPI) [413x531]</option>
-                    <option value="331x354" data-cm-w="2.8" data-cm-h="3.0">Foto Passe Especial (2.8 x 3.0 cm @ 300 DPI) [331x354]</option>
+                    <option value="413x531" data-cm-w="3.5" data-cm-h="4.5" data-crop="true">Foto Passe Normal (3.5 x 4.5 cm @ 300 DPI) [413x531]</option>
+                    <option value="331x354" data-cm-w="2.8" data-cm-h="3.0" data-crop="true">Foto Passe Especial (2.8 x 3.0 cm @ 300 DPI) [331x354]</option>
                 </optgroup>
                 <optgroup label="📷 Instagram (Fotos)">
                     <option value="1080x1350">Feed Retrato (4:5) [1080x1350] - Máximo destaque</option>
@@ -281,7 +281,7 @@
         </div>
 
         <div class="field">
-            <label for="bgColor">4. Cor das Barras de Fundo (Se aplicável):</label>
+            <label for="bgColor">4. Cor das Barras de Fundo:</label>
             <input type="color" id="bgColor" value="#ffffff">
         </div>
 
@@ -320,7 +320,7 @@
         </div>
 
         <div class="field">
-            <label for="batchBgColor">4. Cor das Barras de Fundo (Se aplicável):</label>
+            <label for="batchBgColor">4. Cor das Barras de Fundo:</label>
             <input type="color" id="batchBgColor" value="#ffffff">
         </div>
 
@@ -421,23 +421,39 @@
         canvas.height = parseInt(dimensoes[1], 10);
     }
 
-    // LÓGICA CORRIGIDA: Corte proporcional centrado (Cover/Crop) sem distorcer nem esticar
-    function calcularCorteProporcional(srcW, srcH, targetW, targetH) {
+    // LÓGICA FLEXÍVEL: Escolhe entre Ajustar (sem cortar) ou Recortar (sem margens)
+    function calcularDesenho(srcW, srcH, targetW, targetH, forceCrop = false) {
         const srcRatio = srcW / srcH;
         const targetRatio = targetW / targetH;
 
         let drawW, drawH, drawX, drawY;
 
-        if (srcRatio > targetRatio) {
-            drawH = targetH;
-            drawW = targetH * srcRatio;
-            drawX = (targetW - drawW) / 2;
-            drawY = 0;
+        if (forceCrop) {
+            // MODO CROP (Cover): Preenche 100% da área sem margens (Ideal para Foto Passe)
+            if (srcRatio > targetRatio) {
+                drawH = targetH;
+                drawW = targetH * srcRatio;
+                drawX = (targetW - drawW) / 2;
+                drawY = 0;
+            } else {
+                drawW = targetW;
+                drawH = targetW / srcRatio;
+                drawX = 0;
+                drawY = (targetH - drawH) / 2;
+            }
         } else {
-            drawW = targetW;
-            drawH = targetW / srcRatio;
-            drawX = 0;
-            drawY = (targetH - drawH) / 2;
+            // MODO FIT (Letterbox): Ajusta toda a imagem sem cortar nada (Ideal para Redes Sociais)
+            if (srcRatio > targetRatio) {
+                drawW = targetW;
+                drawH = targetW / srcRatio;
+                drawX = 0;
+                drawY = (targetH - drawH) / 2;
+            } else {
+                drawH = targetH;
+                drawW = targetH * srcRatio;
+                drawX = (targetW - drawW) / 2;
+                drawY = 0;
+            }
         }
         return { drawX, drawY, drawW, drawH };
     }
@@ -445,6 +461,9 @@
     startBtn.addEventListener('click', () => {
         const opcaoSelecionada = conversionType.value;
         definirDimensoesCanvas(opcaoSelecionada);
+
+        const selectedOption = conversionType.options[conversionType.selectedIndex];
+        const isCrop = selectedOption.getAttribute('data-crop') === 'true';
 
         if (fileType === 'image') {
             progressContainer.style.display = 'block';
@@ -456,13 +475,12 @@
             ctx.fillStyle = bgColorInput.value;
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            const dim = calcularCorteProporcional(sourceImage.width, sourceImage.height, canvas.width, canvas.height);
+            const dim = calcularDesenho(sourceImage.width, sourceImage.height, canvas.width, canvas.height, isCrop);
             ctx.drawImage(sourceImage, 0, 0, sourceImage.width, sourceImage.height, dim.drawX, dim.drawY, dim.drawW, dim.drawH);
 
             const format = imgFormatInput.value;
             const filename = `imagem_convertida_${canvas.width}x${canvas.height}`;
 
-            const selectedOption = conversionType.options[conversionType.selectedIndex];
             const cmW = parseFloat(selectedOption.getAttribute('data-cm-w'));
             const cmH = parseFloat(selectedOption.getAttribute('data-cm-h'));
 
@@ -472,7 +490,6 @@
 
                 let pdf;
                 if (cmW && cmH) {
-                    // Para foto passe: cria o PDF com as dimensões físicas exatas em milímetros
                     pdf = new jsPDF({
                         orientation: cmW > cmH ? 'landscape' : 'portrait',
                         unit: 'mm',
@@ -499,7 +516,7 @@
             }
 
             status.className = "sucesso";
-            status.textContent = `Imagem convertida sem distorção para ${format.toUpperCase()}!`;
+            status.textContent = `Imagem ajustada com sucesso para ${format.toUpperCase()}!`;
 
         } else if (fileType === 'video') {
             if (!video.videoWidth || !video.videoHeight) {
@@ -563,7 +580,7 @@
                     ctx.fillStyle = bgColorInput.value;
                     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-                    const dim = calcularCorteProporcional(video.videoWidth, video.videoHeight, canvas.width, canvas.height);
+                    const dim = calcularDesenho(video.videoWidth, video.videoHeight, canvas.width, canvas.height, isCrop);
                     ctx.drawImage(video, 0, 0, video.videoWidth, video.videoHeight, dim.drawX, dim.drawY, dim.drawW, dim.drawH);
 
                     if (video.duration) {
@@ -617,7 +634,7 @@
         }
     });
 
-    function processImageBlob(file, targetWidth, targetHeight, color, format, cmW, cmH) {
+    function processImageBlob(file, targetWidth, targetHeight, color, format, cmW, cmH, isCrop) {
         return new Promise((resolve, reject) => {
             const img = new Image();
             const url = URL.createObjectURL(file);
@@ -627,7 +644,7 @@
                 ctx.fillStyle = color;
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-                const dim = calcularCorteProporcional(img.width, img.height, canvas.width, canvas.height);
+                const dim = calcularDesenho(img.width, img.height, canvas.width, canvas.height, isCrop);
                 ctx.drawImage(img, 0, 0, img.width, img.height, dim.drawX, dim.drawY, dim.drawW, dim.drawH);
 
                 URL.revokeObjectURL(url);
@@ -671,7 +688,7 @@
         });
     }
 
-    function processVideoBlob(file, targetWidth, targetHeight, color) {
+    function processVideoBlob(file, targetWidth, targetHeight, color, isCrop) {
         return new Promise((resolve, reject) => {
             const v = document.createElement('video');
             v.muted = true;
@@ -718,7 +735,7 @@
                     if (v.paused || v.ended) return;
                     ctx.fillStyle = color;
                     ctx.fillRect(0, 0, canvas.width, canvas.height);
-                    const dim = calcularCorteProporcional(v.videoWidth, v.videoHeight, canvas.width, canvas.height);
+                    const dim = calcularDesenho(v.videoWidth, v.videoHeight, canvas.width, canvas.height, isCrop);
                     ctx.drawImage(v, 0, 0, v.videoWidth, v.videoHeight, dim.drawX, dim.drawY, dim.drawW, dim.drawH);
                     localAnimId = requestAnimationFrame(draw);
                 }
@@ -753,6 +770,7 @@
         const selectedOption = batchSelect.options[batchSelect.selectedIndex];
         const cmW = parseFloat(selectedOption.getAttribute('data-cm-w'));
         const cmH = parseFloat(selectedOption.getAttribute('data-cm-h'));
+        const isCrop = selectedOption.getAttribute('data-crop') === 'true';
 
         startBatchBtn.disabled = true;
         batchProgressContainer.style.display = 'block';
@@ -769,10 +787,10 @@
 
             try {
                 if (file.type.startsWith('image/')) {
-                    const { blob, ext } = await processImageBlob(file, targetW, targetH, color, format, cmW, cmH);
+                    const { blob, ext } = await processImageBlob(file, targetW, targetH, color, format, cmW, cmH, isCrop);
                     zip.file(`${originalName}_${targetW}x${targetH}.${ext}`, blob);
                 } else if (file.type.startsWith('video/')) {
-                    const { blob, ext } = await processVideoBlob(file, targetW, targetH, color);
+                    const { blob, ext } = await processVideoBlob(file, targetW, targetH, color, isCrop);
                     zip.file(`${originalName}_${targetW}x${targetH}.${ext}`, blob);
                 }
             } catch (err) {
