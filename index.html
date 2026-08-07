@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Conversor de Rácio: Vídeo e Imagem (Lote & ZIP)</title>
+    <!-- Favicon / Ícone da Aba do Navegador -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3CSVG xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' fill='none'%3E%3Crect x='8' y='18' width='84' height='64' rx='10' stroke='%23007bff' stroke-width='8' fill='%23eef5ff'/%3E%3Crect x='24' y='30' width='52' height='40' rx='5' stroke='%23007bff' stroke-dasharray='4 4' stroke-width='4'/%3E%3Cpath d='M18 12 L32 12 M18 12 L18 26 M18 12 L34 28' stroke='%2328a745' stroke-width='7' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='M82 88 L68 88 M82 88 L82 74 M82 88 L66 72' stroke='%2328a745' stroke-width='7' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/SVG%3E">
     <!-- JSZip para criar ficheiros ZIP diretamente no navegador -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <!-- jsPDF para gerar PDFs de imagens -->
@@ -23,12 +25,46 @@
             border-radius: 12px;
             box-shadow: 0 5px 15px rgba(0,0,0,0.08);
         }
-        h2 {
-            text-align: center;
-            color: #007bff;
-            margin-top: 0;
+
+        /* ESTILOS DO LOGÓTIPO */
+        .logo-header {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
             margin-bottom: 25px;
         }
+        .logo-header svg {
+            width: 48px;
+            height: 48px;
+            transition: transform 0.3s ease;
+        }
+        .logo-header:hover svg {
+            transform: scale(1.05);
+        }
+        .logo-text {
+            display: flex;
+            flex-direction: column;
+            text-align: left;
+        }
+        .logo-title {
+            font-size: 1.8em;
+            font-weight: 800;
+            color: #007bff;
+            line-height: 1.1;
+            letter-spacing: -0.5px;
+        }
+        .logo-title span {
+            color: #28a745;
+        }
+        .logo-subtitle {
+            font-size: 0.85em;
+            color: #666;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
         .tabs {
             display: flex;
             margin-bottom: 25px;
@@ -68,7 +104,7 @@
             margin-bottom: 8px;
             color: #555;
         }
-        select, input[type="file"], input[type="color"], button {
+        select, input[type="file"], input[type="color"], input[type="number"], button {
             width: 100%;
             padding: 12px;
             border: 1px solid #ddd;
@@ -94,6 +130,13 @@
             height: 45px;
             padding: 2px;
             cursor: pointer;
+        }
+        .color-group {
+            display: flex;
+            gap: 15px;
+        }
+        .color-group > div {
+            flex: 1;
         }
         button {
             background-color: #007bff;
@@ -173,7 +216,19 @@
 <body>
 
 <div class="container">
-    <h2>Conversor de Rácio (Vídeo & Imagem)</h2>
+    <!-- CABEÇALHO COM LOGÓTIPO EM SVG -->
+    <div class="logo-header">
+        <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="8" y="18" width="84" height="64" rx="10" stroke="#007bff" stroke-width="6" fill="#eef5ff" />
+            <rect x="24" y="30" width="52" height="40" rx="5" stroke="#007bff" stroke-dasharray="4 4" stroke-width="3" />
+            <path d="M18 12 L32 12 M18 12 L18 26 M18 12 L34 28" stroke="#28a745" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" />
+            <path d="M82 88 L68 88 M82 88 L82 74 M82 88 L66 72" stroke="#28a745" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+        <div class="logo-text">
+            <div class="logo-title">RÁCIO<span>PRO</span></div>
+            <div class="logo-subtitle">Conversor de Vídeo & Imagem</div>
+        </div>
+    </div>
 
     <div class="tabs">
         <button class="tab-btn active" onclick="switchTab('single')">Ficheiro Único</button>
@@ -193,8 +248,8 @@
                 <!-- Opções de Formatos Fotos -->
                 <optgroup label="--- FORMATOS PARA FOTOS ---" disabled></optgroup>
                 <optgroup label="🪪 Fotografias Tipo Passe">
-                    <option value="413x531" data-cm-w="3.5" data-cm-h="4.5" data-crop="true">Foto Passe Normal (3.5 x 4.5 cm @ 300 DPI) [413x531]</option>
-                    <option value="331x354" data-cm-w="2.8" data-cm-h="3.0" data-crop="true">Foto Passe Especial (2.8 x 3.0 cm @ 300 DPI) [331x354]</option>
+                    <option value="413x531" data-cm-w="3.5" data-cm-h="4.5">Foto Passe Normal (3.5 x 4.5 cm @ 300 DPI) [413x531]</option>
+                    <option value="331x354" data-cm-w="2.8" data-cm-h="3.0">Foto Passe Especial (2.8 x 3.0 cm @ 300 DPI) [331x354]</option>
                 </optgroup>
                 <optgroup label="📷 Instagram (Fotos)">
                     <option value="1080x1350">Feed Retrato (4:5) [1080x1350] - Máximo destaque</option>
@@ -272,7 +327,15 @@
         </div>
 
         <div class="field">
-            <label for="imgFormat">3. Formato de Saída para Imagens:</label>
+            <label for="fitMode">3. Modo de Enquadramento:</label>
+            <select id="fitMode" class="fitModeSelect">
+                <option value="fit">Ajustar e Adicionar Fundo (Sem cortar nada / Inteira)</option>
+                <option value="crop">Preencher e Recortar Centrado (Sem barras laterais)</option>
+            </select>
+        </div>
+
+        <div class="field">
+            <label for="imgFormat">4. Formato de Saída para Imagens:</label>
             <select id="imgFormat">
                 <option value="png">PNG (.png) - Sem perda de qualidade</option>
                 <option value="jpg">JPG / JPEG (.jpg) - Mais leve</option>
@@ -280,9 +343,19 @@
             </select>
         </div>
 
-        <div class="field">
-            <label for="bgColor">4. Cor das Barras de Fundo:</label>
-            <input type="color" id="bgColor" value="#ffffff">
+        <div class="color-group">
+            <div class="field">
+                <label for="bgColor">5. Cor do Fundo:</label>
+                <input type="color" id="bgColor" value="#ffffff">
+            </div>
+            <div class="field">
+                <label for="borderWidth">6. Espessura Moldura (px):</label>
+                <input type="number" id="borderWidth" value="0" min="0" max="200">
+            </div>
+            <div class="field">
+                <label for="borderColor">Cor da Moldura:</label>
+                <input type="color" id="borderColor" value="#000000">
+            </div>
         </div>
 
         <button id="startBtn" disabled>Converter e Descarregar</button>
@@ -311,7 +384,15 @@
         </div>
 
         <div class="field">
-            <label for="batchImgFormat">3. Formato de Saída para Imagens:</label>
+            <label for="batchFitMode">3. Modo de Enquadramento:</label>
+            <select id="batchFitMode" class="fitModeSelect">
+                <option value="fit">Ajustar e Adicionar Fundo (Sem cortar nada / Inteira)</option>
+                <option value="crop">Preencher e Recortar Centrado (Sem barras laterais)</option>
+            </select>
+        </div>
+
+        <div class="field">
+            <label for="batchImgFormat">4. Formato de Saída para Imagens:</label>
             <select id="batchImgFormat">
                 <option value="png">PNG (.png) - Sem perda de qualidade</option>
                 <option value="jpg">JPG / JPEG (.jpg) - Mais leve</option>
@@ -319,9 +400,19 @@
             </select>
         </div>
 
-        <div class="field">
-            <label for="batchBgColor">4. Cor das Barras de Fundo:</label>
-            <input type="color" id="batchBgColor" value="#ffffff">
+        <div class="color-group">
+            <div class="field">
+                <label for="batchBgColor">5. Cor do Fundo:</label>
+                <input type="color" id="batchBgColor" value="#ffffff">
+            </div>
+            <div class="field">
+                <label for="batchBorderWidth">6. Espessura Moldura (px):</label>
+                <input type="number" id="batchBorderWidth" value="0" min="0" max="200">
+            </div>
+            <div class="field">
+                <label for="batchBorderColor">Cor da Moldura:</label>
+                <input type="color" id="batchBorderColor" value="#000000">
+            </div>
         </div>
 
         <button id="startBatchBtn" disabled>Processar Pasta e Gerar ZIP</button>
@@ -357,8 +448,11 @@
 
     const fileInput = document.getElementById('fileInput');
     const conversionType = singleSelect;
+    const fitModeInput = document.getElementById('fitMode');
     const imgFormatInput = document.getElementById('imgFormat');
     const bgColorInput = document.getElementById('bgColor');
+    const borderWidthInput = document.getElementById('borderWidth');
+    const borderColorInput = document.getElementById('borderColor');
     const startBtn = document.getElementById('startBtn');
     const progressContainer = document.getElementById('progressContainer');
     const progressLabel = document.getElementById('progressLabel');
@@ -366,8 +460,11 @@
     const status = document.getElementById('status');
 
     const folderInput = document.getElementById('folderInput');
+    const batchFitModeInput = document.getElementById('batchFitMode');
     const batchImgFormatInput = document.getElementById('batchImgFormat');
     const batchBgColor = document.getElementById('batchBgColor');
+    const batchBorderWidthInput = document.getElementById('batchBorderWidth');
+    const batchBorderColorInput = document.getElementById('batchBorderColor');
     const startBatchBtn = document.getElementById('startBatchBtn');
     const batchProgressContainer = document.getElementById('batchProgressContainer');
     const batchProgressBar = document.getElementById('batchProgressBar');
@@ -421,49 +518,78 @@
         canvas.height = parseInt(dimensoes[1], 10);
     }
 
-    // LÓGICA FLEXÍVEL: Escolhe entre Ajustar (sem cortar) ou Recortar (sem margens)
-    function calcularDesenho(srcW, srcH, targetW, targetH, forceCrop = false) {
+    function calcularDesenho(srcW, srcH, targetW, targetH, mode = 'fit', bWidth = 0) {
+        const innerW = Math.max(1, targetW - (bWidth * 2));
+        const innerH = Math.max(1, targetH - (bWidth * 2));
+
         const srcRatio = srcW / srcH;
-        const targetRatio = targetW / targetH;
+        const innerRatio = innerW / innerH;
 
         let drawW, drawH, drawX, drawY;
 
-        if (forceCrop) {
-            // MODO CROP (Cover): Preenche 100% da área sem margens (Ideal para Foto Passe)
-            if (srcRatio > targetRatio) {
-                drawH = targetH;
-                drawW = targetH * srcRatio;
-                drawX = (targetW - drawW) / 2;
-                drawY = 0;
+        if (mode === 'crop') {
+            if (srcRatio > innerRatio) {
+                drawH = innerH;
+                drawW = innerH * srcRatio;
+                drawX = bWidth + (innerW - drawW) / 2;
+                drawY = bWidth;
             } else {
-                drawW = targetW;
-                drawH = targetW / srcRatio;
-                drawX = 0;
-                drawY = (targetH - drawH) / 2;
+                drawW = innerW;
+                drawH = innerW / srcRatio;
+                drawX = bWidth;
+                drawY = bWidth + (innerH - drawH) / 2;
             }
         } else {
-            // MODO FIT (Letterbox): Ajusta toda a imagem sem cortar nada (Ideal para Redes Sociais)
-            if (srcRatio > targetRatio) {
-                drawW = targetW;
-                drawH = targetW / srcRatio;
-                drawX = 0;
-                drawY = (targetH - drawH) / 2;
+            if (srcRatio > innerRatio) {
+                drawW = innerW;
+                drawH = innerW / srcRatio;
+                drawX = bWidth;
+                drawY = bWidth + (innerH - drawH) / 2;
             } else {
-                drawH = targetH;
-                drawW = targetH * srcRatio;
-                drawX = (targetW - drawW) / 2;
-                drawY = 0;
+                drawH = innerH;
+                drawW = innerH * srcRatio;
+                drawX = bWidth + (innerW - drawW) / 2;
+                drawY = bWidth;
             }
         }
         return { drawX, drawY, drawW, drawH };
+    }
+
+    function desenharCanvasComMoldura(imageObj, targetW, targetH, mode, bgColor, bWidth, bColor) {
+        canvas.width = targetW;
+        canvas.height = targetH;
+
+        ctx.fillStyle = bgColor;
+        ctx.fillRect(0, 0, targetW, targetH);
+
+        const dim = calcularDesenho(imageObj.width || imageObj.videoWidth, imageObj.height || imageObj.videoHeight, targetW, targetH, mode, bWidth);
+
+        if (mode === 'crop' && bWidth > 0) {
+            ctx.save();
+            ctx.beginPath();
+            ctx.rect(bWidth, bWidth, targetW - (bWidth * 2), targetH - (bWidth * 2));
+            ctx.clip();
+            ctx.drawImage(imageObj, 0, 0, imageObj.width || imageObj.videoWidth, imageObj.height || imageObj.videoHeight, dim.drawX, dim.drawY, dim.drawW, dim.drawH);
+            ctx.restore();
+        } else {
+            ctx.drawImage(imageObj, 0, 0, imageObj.width || imageObj.videoWidth, imageObj.height || imageObj.videoHeight, dim.drawX, dim.drawY, dim.drawW, dim.drawH);
+        }
+
+        if (bWidth > 0) {
+            ctx.strokeStyle = bColor;
+            ctx.lineWidth = bWidth * 2;
+            ctx.strokeRect(0, 0, targetW, targetH);
+        }
     }
 
     startBtn.addEventListener('click', () => {
         const opcaoSelecionada = conversionType.value;
         definirDimensoesCanvas(opcaoSelecionada);
 
-        const selectedOption = conversionType.options[conversionType.selectedIndex];
-        const isCrop = selectedOption.getAttribute('data-crop') === 'true';
+        const fitMode = fitModeInput.value;
+        const bgColor = bgColorInput.value;
+        const borderWidth = parseInt(borderWidthInput.value, 10) || 0;
+        const borderColor = borderColorInput.value;
 
         if (fileType === 'image') {
             progressContainer.style.display = 'block';
@@ -472,15 +598,12 @@
             status.className = "";
             status.textContent = "A processar imagem...";
 
-            ctx.fillStyle = bgColorInput.value;
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-            const dim = calcularDesenho(sourceImage.width, sourceImage.height, canvas.width, canvas.height, isCrop);
-            ctx.drawImage(sourceImage, 0, 0, sourceImage.width, sourceImage.height, dim.drawX, dim.drawY, dim.drawW, dim.drawH);
+            desenharCanvasComMoldura(sourceImage, canvas.width, canvas.height, fitMode, bgColor, borderWidth, borderColor);
 
             const format = imgFormatInput.value;
             const filename = `imagem_convertida_${canvas.width}x${canvas.height}`;
 
+            const selectedOption = conversionType.options[conversionType.selectedIndex];
             const cmW = parseFloat(selectedOption.getAttribute('data-cm-w'));
             const cmH = parseFloat(selectedOption.getAttribute('data-cm-h'));
 
@@ -516,7 +639,7 @@
             }
 
             status.className = "sucesso";
-            status.textContent = `Imagem ajustada com sucesso para ${format.toUpperCase()}!`;
+            status.textContent = `Imagem convertida com sucesso para ${format.toUpperCase()}!`;
 
         } else if (fileType === 'video') {
             if (!video.videoWidth || !video.videoHeight) {
@@ -577,11 +700,7 @@
                 function drawFrame() {
                     if (video.paused || video.ended) return;
 
-                    ctx.fillStyle = bgColorInput.value;
-                    ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-                    const dim = calcularDesenho(video.videoWidth, video.videoHeight, canvas.width, canvas.height, isCrop);
-                    ctx.drawImage(video, 0, 0, video.videoWidth, video.videoHeight, dim.drawX, dim.drawY, dim.drawW, dim.drawH);
+                    desenharCanvasComMoldura(video, canvas.width, canvas.height, fitMode, bgColor, borderWidth, borderColor);
 
                     if (video.duration) {
                         const pct = (video.currentTime / video.duration) * 100;
@@ -634,18 +753,12 @@
         }
     });
 
-    function processImageBlob(file, targetWidth, targetHeight, color, format, cmW, cmH, isCrop) {
+    function processImageBlob(file, targetWidth, targetHeight, mode, color, format, cmW, cmH, bWidth, bColor) {
         return new Promise((resolve, reject) => {
             const img = new Image();
             const url = URL.createObjectURL(file);
             img.onload = () => {
-                canvas.width = targetWidth;
-                canvas.height = targetHeight;
-                ctx.fillStyle = color;
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-                const dim = calcularDesenho(img.width, img.height, canvas.width, canvas.height, isCrop);
-                ctx.drawImage(img, 0, 0, img.width, img.height, dim.drawX, dim.drawY, dim.drawW, dim.drawH);
+                desenharCanvasComMoldura(img, targetWidth, targetHeight, mode, color, bWidth, bColor);
 
                 URL.revokeObjectURL(url);
 
@@ -688,7 +801,7 @@
         });
     }
 
-    function processVideoBlob(file, targetWidth, targetHeight, color, isCrop) {
+    function processVideoBlob(file, targetWidth, targetHeight, mode, color, bWidth, bColor) {
         return new Promise((resolve, reject) => {
             const v = document.createElement('video');
             v.muted = true;
@@ -733,10 +846,7 @@
 
                 function draw() {
                     if (v.paused || v.ended) return;
-                    ctx.fillStyle = color;
-                    ctx.fillRect(0, 0, canvas.width, canvas.height);
-                    const dim = calcularDesenho(v.videoWidth, v.videoHeight, canvas.width, canvas.height, isCrop);
-                    ctx.drawImage(v, 0, 0, v.videoWidth, v.videoHeight, dim.drawX, dim.drawY, dim.drawW, dim.drawH);
+                    desenharCanvasComMoldura(v, targetWidth, targetHeight, mode, color, bWidth, bColor);
                     localAnimId = requestAnimationFrame(draw);
                 }
 
@@ -766,11 +876,13 @@
         const [targetW, targetH] = opcao.split('x').map(n => parseInt(n, 10));
         const color = batchBgColor.value;
         const format = batchImgFormatInput.value;
+        const mode = batchFitModeInput.value;
+        const bWidth = parseInt(batchBorderWidthInput.value, 10) || 0;
+        const bColor = batchBorderColorInput.value;
 
         const selectedOption = batchSelect.options[batchSelect.selectedIndex];
         const cmW = parseFloat(selectedOption.getAttribute('data-cm-w'));
         const cmH = parseFloat(selectedOption.getAttribute('data-cm-h'));
-        const isCrop = selectedOption.getAttribute('data-crop') === 'true';
 
         startBatchBtn.disabled = true;
         batchProgressContainer.style.display = 'block';
@@ -787,10 +899,10 @@
 
             try {
                 if (file.type.startsWith('image/')) {
-                    const { blob, ext } = await processImageBlob(file, targetW, targetH, color, format, cmW, cmH, isCrop);
+                    const { blob, ext } = await processImageBlob(file, targetW, targetH, mode, color, format, cmW, cmH, bWidth, bColor);
                     zip.file(`${originalName}_${targetW}x${targetH}.${ext}`, blob);
                 } else if (file.type.startsWith('video/')) {
-                    const { blob, ext } = await processVideoBlob(file, targetW, targetH, color, isCrop);
+                    const { blob, ext } = await processVideoBlob(file, targetW, targetH, mode, color, bWidth, bColor);
                     zip.file(`${originalName}_${targetW}x${targetH}.${ext}`, blob);
                 }
             } catch (err) {
