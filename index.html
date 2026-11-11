@@ -131,6 +131,19 @@
             padding: 2px;
             cursor: pointer;
         }
+        .format-help {
+            margin: 10px 0 0;
+            padding: 12px;
+            border-left: 3px solid #386641;
+            border-radius: 4px;
+            background: #f2f7ed;
+            color: #386641;
+            font-size: 0.9em;
+            line-height: 1.5;
+        }
+        .format-help[hidden] {
+            display: none;
+        }
         .color-group {
             display: flex;
             gap: 15px;
@@ -244,12 +257,18 @@
 
         <div class="field">
             <label for="conversionType">2. Selecionar Formato / Rede Social:</label>
-            <select class="conversionTypeSelect">
+            <select id="conversionType" class="conversionTypeSelect" aria-describedby="infraloboFormatHelp">
                 <!-- Opções de Formatos Fotos -->
                 <optgroup label="--- FORMATOS PARA FOTOS ---" disabled></optgroup>
                 <optgroup label="🪪 Fotografias Tipo Passe">
                     <option value="413x531" data-cm-w="3.5" data-cm-h="4.5">Foto Passe Normal (3.5 x 4.5 cm @ 300 DPI) [413x531]</option>
                     <option value="331x354" data-cm-w="2.8" data-cm-h="3.0">Foto Passe Especial (2.8 x 3.0 cm @ 300 DPI) [331x354]</option>
+                </optgroup>
+                <optgroup label="Website da Infralobo">
+                    <option value="1420x1360" data-website="infralobo">Destaque principal — topo da homepage [1420x1360]</option>
+                    <option value="1548x902" data-website="infralobo">Notícias e Avisos — 1.ª notícia em destaque [1548x902]</option>
+                    <option value="1188x430" data-website="infralobo">Notícias e Avisos — 2.ª notícia, bloco inferior esquerdo [1188x430]</option>
+                    <option value="656x812" data-website="infralobo">Notícias e Avisos — 3.ª e 4.ª notícias, blocos inferiores direitos [656x812]</option>
                 </optgroup>
                 <optgroup label="📷 Instagram (Fotos)">
                     <option value="1080x1350">Feed Retrato (4:5) [1080x1350] - Máximo destaque</option>
@@ -324,6 +343,7 @@
                     <option value="1680x720">Ultra-Panorâmico / Cinema (21:9) [1680x720]</option>
                 </optgroup>
             </select>
+            <p id="infraloboFormatHelp" class="format-help" hidden>Dimensões para a versão de computador do Website da Infralobo. O modo «Ajustar e Adicionar Fundo» preserva a imagem inteira no ficheiro convertido. Mantém texto e logótipos afastados das margens; o site pode aplicar outros recortes no telemóvel ou quando a notícia muda de posição.</p>
         </div>
 
         <div class="field">
@@ -380,7 +400,8 @@
 
         <div class="field">
             <label for="batchConversionType">2. Selecionar Formato de Saída em Massa:</label>
-            <select id="batchConversionType" class="conversionTypeSelect"></select>
+            <select id="batchConversionType" class="conversionTypeSelect" aria-describedby="batchInfraloboFormatHelp"></select>
+            <p id="batchInfraloboFormatHelp" class="format-help" hidden>Dimensões para a versão de computador do Website da Infralobo. O modo «Ajustar e Adicionar Fundo» preserva a imagem inteira no ficheiro convertido. Mantém texto e logótipos afastados das margens; o site pode aplicar outros recortes no telemóvel ou quando a notícia muda de posição.</p>
         </div>
 
         <div class="field">
@@ -472,6 +493,23 @@
     const fileListContainer = document.getElementById('fileListContainer');
     const fileList = document.getElementById('fileList');
     const fileCount = document.getElementById('fileCount');
+
+    function configurarFormatosInfralobo(select, fitSelect, helpId) {
+        const help = document.getElementById(helpId);
+        function atualizarFormato(event) {
+            const option = select.options[select.selectedIndex];
+            const isInfralobo = option && option.dataset.website === 'infralobo';
+            help.hidden = !isInfralobo;
+            if (isInfralobo && event) {
+                fitSelect.value = 'fit';
+            }
+        }
+        select.addEventListener('change', atualizarFormato);
+        atualizarFormato();
+    }
+
+    configurarFormatosInfralobo(singleSelect, fitModeInput, 'infraloboFormatHelp');
+    configurarFormatosInfralobo(batchSelect, batchFitModeInput, 'batchInfraloboFormatHelp');
 
     const video = document.getElementById('sourceVideo');
     const canvas = document.getElementById('processingCanvas');
